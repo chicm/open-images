@@ -9,10 +9,32 @@ import configs.settings as settings
 from detect.utils import get_classes, get_image_size
 
 _, stoi = get_classes()
+args = None
 
 def group2mmdetection(group: dict) -> dict:
+    """Custom dataset for detection.
+
+    Annotation format:
+    [
+        {
+            'filename': 'a.jpg',
+            'width': 1280,
+            'height': 720,
+            'ann': {
+                'bboxes': <np.ndarray> (n, 4),
+                'labels': <np.ndarray> (n, ),
+                'bboxes_ignore': <np.ndarray> (k, 4),
+                'labels_ignore': <np.ndarray> (k, 4) (optional field)
+            }
+        },
+        ...
+    ]
+
+    The `ann` field is optional for testing.
+    """
+
     image_id, group = group
-    fn = os.path.join(settings.TRAIN_IMG_DIR, '{}.jpg'.format(image_id))
+    fn = os.path.join(args.img_dir, '{}.jpg'.format(image_id))
     width, height = get_image_size(fn)
 
     group['XMin'] = group['XMin'] * width
@@ -34,33 +56,13 @@ def group2mmdetection(group: dict) -> dict:
         }
     }
 
-def create_train():
-    """Custom dataset for detection.
-
-    Annotation format:
-    [
-        {
-            'filename': 'a.jpg',
-            'width': 1280,
-            'height': 720,
-            'ann': {
-                'bboxes': <np.ndarray> (n, 4),
-                'labels': <np.ndarray> (n, ),
-                'bboxes_ignore': <np.ndarray> (k, 4),
-                'labels_ignore': <np.ndarray> (k, 4) (optional field)
-            }
-        },
-        ...
-    ]
-
-    The `ann` field is optional for testing.
-    """
+def create_train(args):
     classes, stoi = get_classes()
 
     n_samples = -1
     df = pd.read_csv(os.path.join(settings.DETECT_DATA_DIR, 'challenge-2019-train-detection-bbox.csv'))
     #print(df.head())
-    files = sorted(os.listdir(settings.TRAIN_IMG_DIR))
+    files = sorted(os.listdir(args.img_dir))
     print('total train img files:', len(files))
 
     img_ids = [os.path.basename(x).split('.')[0] for x in files]
@@ -72,16 +74,20 @@ def create_train():
     if n_samples > 0:
         groups = groups[:n_samples]
     #print('groups:', groups[:5])
-
     #print(group2mmdetection(groups[0]))
 
     with Pool(50) as p:
         samples = list(tqdm(iterable=p.imap_unordered(group2mmdetection, groups), total=len(groups)))
 
-    out_file = os.path.join(settings.DETECT_DATA_DIR, 'train_0.pkl')
+    out_file = os.path.join(settings.DETECT_DATA_DIR, args.output)
     with open(out_file, 'wb') as f:
         pickle.dump(samples, f)
 
-
+import argparse
 if __name__ == '__main__':
-    create_train()
+    parser = argparse.ArgumentParser(description='create mmdetection dataset')
+    parser.add_argument('--img_dir', type=str, required=True)
+    parser.add_argument('--output', type=str, required=True)
+    args = parser.parse_args()
+
+    create_train(args)

@@ -110,7 +110,7 @@ data = dict(
     workers_per_gpu=4,
     train=dict(
         type=dataset_type,
-        ann_file=data_root + '/detect/train_0.pkl',
+        ann_file=data_root + '/detect/train_1-5.pkl',
         img_prefix=settings.TRAIN_IMG_DIR,
         img_scale=(1024, 600),
         img_norm_cfg=img_norm_cfg,
@@ -121,7 +121,7 @@ data = dict(
         with_label=True),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + '/detect/train_0.pkl',
+        ann_file=data_root + '/detect/train_1-5.pkl',
         img_prefix=settings.TRAIN_IMG_DIR,
         img_scale=(1024, 600),
         img_norm_cfg=img_norm_cfg,
@@ -132,7 +132,7 @@ data = dict(
         with_label=True),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + '/detect/train_0.pkl',
+        ann_file=data_root + '/detect/train_1-5.pkl',
         img_prefix=settings.TRAIN_IMG_DIR,
         img_scale=(1024, 600),
         img_norm_cfg=img_norm_cfg,
@@ -152,7 +152,7 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=500,
     warmup_ratio=1.0 / 3,
-    step=[2000, 10000],
+    step=[2000, 20000],
     by_epoch=False)
 checkpoint_config = CheckpointHook(interval=1000) #dict(interval=1)
 # yapf:disable
@@ -164,10 +164,10 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 12
+total_epochs = 4
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs/faster_rcnn_r50_fpn_1x'
-load_from = None
-resume_from = None
+load_from = './work_dirs/faster_rcnn_r50_fpn_1x/latest.pth'
+resume_from = './work_dirs/faster_rcnn_r50_fpn_1x/latest.pth'
 workflow = [('train', 1)]
