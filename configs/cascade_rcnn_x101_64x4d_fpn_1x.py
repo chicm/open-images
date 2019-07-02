@@ -44,7 +44,7 @@ model = dict(
             in_channels=256,
             fc_out_channels=1024,
             roi_feat_size=7,
-            num_classes=81,
+            num_classes=501,
             target_means=[0., 0., 0., 0.],
             target_stds=[0.1, 0.1, 0.2, 0.2],
             reg_class_agnostic=True,
@@ -80,7 +80,7 @@ model = dict(
             in_channels=256,
             fc_out_channels=1024,
             roi_feat_size=7,
-            num_classes=81,
+            num_classes=501,
             target_means=[0., 0., 0., 0.],
             target_stds=[0.033, 0.033, 0.067, 0.067],
             reg_class_agnostic=True,
@@ -184,11 +184,11 @@ data_root = settings.ROOT_DIR
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 data = dict(
-    imgs_per_gpu=2,
-    workers_per_gpu=2,
+    imgs_per_gpu=6,
+    workers_per_gpu=4,
     train=dict(
         type=dataset_type,
-        ann_file=data_root + '/detect/train_6-e.pkl',
+        ann_file=data_root + '/detect/train500k.pkl',
         img_prefix=settings.TRAIN_IMG_DIR,
         img_scale=(1024, 600),
         
@@ -197,7 +197,15 @@ data = dict(
         flip_ratio=0.5,
         with_mask=False,
         with_crowd=False,
-        with_label=True),
+        with_label=True,
+        extra_aug=dict(
+            photo_metric_distortion=dict(
+                brightness_delta=20,
+                contrast_range=(0.8,1.2),
+                saturation_range=(0.8,1.2)
+            )
+        )
+    ),
     val=dict(
         type=dataset_type,
         ann_file=data_root + '/detect/val.pkl',
@@ -222,7 +230,8 @@ data = dict(
         with_label=False,
         test_mode=True))
 # optimizer
-optimizer = dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
+#optimizer = dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
+optimizer = dict(type='Adam', lr=0.001, weight_decay=0.0001)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
 lr_config = dict(
@@ -230,9 +239,10 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=200,
     warmup_ratio=1.0 / 3,
-    step=[50000],
+    step=[500, 2000, 5000, 10000],
+    gamma=0.5,
     by_epoch=False)
-checkpoint_config = CheckpointHook(interval=1000) #dict(interval=1)
+checkpoint_config = CheckpointHook(interval=500) #dict(interval=1)
 # yapf:disable
 log_config = dict(
     interval=50,
