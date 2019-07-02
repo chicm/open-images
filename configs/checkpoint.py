@@ -21,5 +21,6 @@ class CheckpointHook(Hook):
             return
         if not self.out_dir:
             self.out_dir = runner.work_dir
-        runner.save_checkpoint(
-            self.out_dir, save_optimizer=self.save_optimizer, **self.args)
+        print('saving checkpoint...')
+        runner.save_checkpoint(self.out_dir, save_optimizer=self.save_optimizer, **self.args)
+        print('done.')

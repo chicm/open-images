@@ -110,7 +110,7 @@ data = dict(
     workers_per_gpu=4,
     train=dict(
         type=dataset_type,
-        ann_file=data_root + '/detect/train_1-5.pkl',
+        ann_file=data_root + '/detect/train_6-e.pkl',
         img_prefix=settings.TRAIN_IMG_DIR,
         img_scale=(1024, 600),
         img_norm_cfg=img_norm_cfg,
@@ -121,8 +121,8 @@ data = dict(
         with_label=True),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + '/detect/train_1-5.pkl',
-        img_prefix=settings.TRAIN_IMG_DIR,
+        ann_file=data_root + '/detect/val.pkl',
+        img_prefix=settings.VAL_IMG_DIR,
         img_scale=(1024, 600),
         img_norm_cfg=img_norm_cfg,
         size_divisor=32,
@@ -132,8 +132,8 @@ data = dict(
         with_label=True),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + '/detect/train_1-5.pkl',
-        img_prefix=settings.TRAIN_IMG_DIR,
+        ann_file=data_root + '/detect/test.pkl',
+        img_prefix=settings.TEST_IMG_DIR,
         img_scale=(1024, 600),
         img_norm_cfg=img_norm_cfg,
         size_divisor=32,
@@ -143,16 +143,16 @@ data = dict(
         test_mode=True))
 # optimizer
 #optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
-optimizer = dict(type='Adam', lr=0.0004, weight_decay=0.0001)
+optimizer = dict(type='Adam', lr=0.00004, weight_decay=0.0001)
 
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
 lr_config = dict(
     policy='step',
     warmup='linear',
-    warmup_iters=500,
+    warmup_iters=200,
     warmup_ratio=1.0 / 3,
-    step=[2000, 20000],
+    step=[20000],
     by_epoch=False)
 checkpoint_config = CheckpointHook(interval=1000) #dict(interval=1)
 # yapf:disable
@@ -169,5 +169,6 @@ dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs/faster_rcnn_r50_fpn_1x'
 load_from = './work_dirs/faster_rcnn_r50_fpn_1x/latest.pth'
-resume_from = './work_dirs/faster_rcnn_r50_fpn_1x/latest.pth'
+#resume_from = './work_dirs/faster_rcnn_r50_fpn_1x/latest.pth'
+resume_from = None
 workflow = [('train', 1)]
