@@ -7,10 +7,10 @@ import pickle
 import glob
 
 import configs.settings as settings
-from detect.utils import get_classes, get_image_size
+from detect.utils import get_classes, get_image_size, get_top_classes
 
-_, stoi = get_classes()
-args = None
+#_, stoi = get_classes()
+classes, stoi, args = None, None, None
 
 def group2mmdetection(group: dict) -> dict:
     """Custom dataset for detection.
@@ -64,10 +64,11 @@ def group2mmdetection(group: dict) -> dict:
     }
 
 def create_train(args):
-    classes, stoi = get_classes()
-
     n_samples = -1
     df = pd.read_csv(os.path.join(settings.DETECT_DATA_DIR, args.meta))
+    print(len(df), len(df.ImageID.unique()))
+    df = df.loc[df.LabelName.isin(set(classes))].copy()
+    print(len(df), len(df.ImageID.unique()))
     #print(df.head())
     #files = sorted(os.listdir(args.img_dir))
     files = []
@@ -132,7 +133,15 @@ if __name__ == '__main__':
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--flat', action='store_true')
     parser.add_argument('--meta', type=str, default='challenge-2019-train-detection-bbox.csv')
+    parser.add_argument('--top_classes', action='store_true')
+    parser.add_argument('--start_index', type=int)
+    parser.add_argument('--end_index', type=int)
     args = parser.parse_args()
+
+    if args.top_classes:
+        classes, stoi = get_top_classes(args.start_index, args.end_index)
+    else:
+        classes, stoi = get_classes()
 
     if args.test:
         if args.test_img_dir is None:

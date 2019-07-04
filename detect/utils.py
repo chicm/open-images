@@ -14,6 +14,12 @@ def get_classes():
     stoi = { c[i]: i for i in range(len(c)) }
     return c, stoi
 
+def get_top_classes(start_index, end_index):
+    df = pd.read_csv(os.path.join(settings.DETECT_DATA_DIR, 'top_classes.csv'))
+    c = df['class'].values[start_index:end_index]
+    #print(df.head())
+    stoi = { c[i]: i for i in range(len(c)) }
+    return c, stoi
 
 def get_image_size(fname):
     '''Determine the image type of fhandle and return its size.
@@ -54,3 +60,7 @@ def get_image_size(fname):
             height, width, _ = img.shape
 
         return width, height
+
+if __name__ == '__main__':
+    c, stoi = get_top_classes(10, 100)
+    print(c[:10])
