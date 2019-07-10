@@ -103,8 +103,9 @@ test_cfg = dict(
         min_bbox_size=0),
     rcnn=dict(
         #score_thr=0.05, nms=dict(type='nms', iou_thr=0.5), max_per_img=50)
-        #score_thr=0.1, nms=dict(type='nms', iou_thr=0.5), max_per_img=100)
-        score_thr=0.05, nms=dict(type='soft_nms', iou_thr=0.3, min_score=0.05), max_per_img=100)
+        score_thr=0.001, nms=dict(type='nms', iou_thr=0.5), max_per_img=200)
+        #score_thr=0.05, nms=dict(type='soft_nms', iou_thr=0.3, min_score=0.05), max_per_img=100)
+        #score_thr=0.01, nms=dict(type='soft_nms', iou_thr=0.3, min_score=0.01), max_per_img=100)
     # soft-nms is also supported for rcnn testing
     # e.g., nms=dict(type='soft_nms', iou_thr=0.5, min_score=0.05)
 )
@@ -159,7 +160,7 @@ data = dict(
         test_mode=True))
 # optimizer
 #optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
-optimizer = dict(type='Adam', lr=0.0004, weight_decay=0.0001)
+optimizer = dict(type='Adam', lr=0.00004, weight_decay=0.0001)
 
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
@@ -168,7 +169,8 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=200,
     warmup_ratio=1.0 / 3,
-    step=[1000, 2000, 4000],
+    step=[50000],
+    gamma=0.5,
     by_epoch=False)
 checkpoint_config = CheckpointHook(interval=1000) #dict(interval=1)
 # yapf:disable
@@ -184,8 +186,8 @@ total_epochs = 10
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs/faster_rcnn_r50_fpn_1x_bottom400'
-load_from = None  #'./work_dirs/faster_rcnn_r50_fpn_1x/latest.pth'
-#load_from = './work_dirs/faster_rcnn_r50_fpn_1x/epoch_2.pth_loss_0300_0702am'
+#load_from = None  #'./work_dirs/faster_rcnn_r50_fpn_1x/latest.pth'
+load_from = './work_dirs/faster_rcnn_r50_fpn_1x_bottom400/latest.pth'
 
 #resume_from = './work_dirs/faster_rcnn_r50_fpn_1x/latest.pth'
 resume_from = None

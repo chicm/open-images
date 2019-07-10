@@ -4,10 +4,10 @@ from checkpoint import CheckpointHook
 # model settings
 model = dict(
     type='FasterRCNN',
-    pretrained='modelzoo://resnet50',
+    pretrained='modelzoo://resnet101',
     backbone=dict(
         type='ResNet',
-        depth=50,
+        depth=101,
         num_stages=4,
         out_indices=(0, 1, 2, 3),
         frozen_stages=1,
@@ -40,18 +40,12 @@ model = dict(
         in_channels=256,
         fc_out_channels=1024,
         roi_feat_size=7,
-        num_classes=501,
+        num_classes=81,
         target_means=[0., 0., 0., 0.],
         target_stds=[0.1, 0.1, 0.2, 0.2],
         reg_class_agnostic=False,
         loss_cls=dict(
             type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
-        #loss_cls=dict(
-        #    type='FocalLoss',
-        #    use_sigmoid=True,
-        #    gamma=2.0,
-        #    alpha=0.25,
-        #    loss_weight=1.0),
         loss_bbox=dict(type='SmoothL1Loss', beta=1.0, loss_weight=1.0)))
 # model training and testing settings
 train_cfg = dict(
@@ -102,9 +96,7 @@ test_cfg = dict(
         nms_thr=0.7,
         min_bbox_size=0),
     rcnn=dict(
-        #score_thr=0.05, nms=dict(type='nms', iou_thr=0.5), max_per_img=50)
-        #score_thr=0.1, nms=dict(type='nms', iou_thr=0.5), max_per_img=100)
-        score_thr=0.01, nms=dict(type='soft_nms', iou_thr=0.3, min_score=0.01), max_per_img=100)
+        score_thr=0.001, nms=dict(type='nms', iou_thr=0.5), max_per_img=100)
     # soft-nms is also supported for rcnn testing
     # e.g., nms=dict(type='soft_nms', iou_thr=0.5, min_score=0.05)
 )
@@ -114,11 +106,11 @@ data_root = settings.ROOT_DIR
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 data = dict(
-    imgs_per_gpu=8,
-    workers_per_gpu=16,
+    imgs_per_gpu=6,
+    workers_per_gpu=6,
     train=dict(
         type=dataset_type,
-        ann_file=data_root + '/detect/train_0-e.pkl',
+        ann_file=data_root + '/detect/train_0-e',
         img_prefix=settings.TRAIN_IMG_DIR,
         img_scale=(1024, 600),
         img_norm_cfg=img_norm_cfg,
@@ -126,7 +118,15 @@ data = dict(
         flip_ratio=0.5,
         with_mask=False,
         with_crowd=False,
-        with_label=True),
+        with_label=True,
+        extra_aug=dict(
+            photo_metric_distortion=dict(
+                brightness_delta=20,
+                contrast_range=(0.8,1.2),
+                saturation_range=(0.8,1.2)
+            )
+        )
+    ),
     val=dict(
         type=dataset_type,
         ann_file=data_root + '/detect/val.pkl',
@@ -139,7 +139,7 @@ data = dict(
         with_crowd=False,
         with_label=True),
     test=dict(
-        imgs_per_gpu_override=1,
+        #imgs_per_gpu_override=8,
         type=dataset_type,
         ann_file=data_root + '/detect/test.pkl',
         img_prefix=settings.TEST_IMG_DIR,
@@ -151,9 +151,9 @@ data = dict(
         with_label=False,
         test_mode=True))
 # optimizer
-#optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
+#optimizer = dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
+#optimizer = dict(type='Adam', lr=0.001, weight_decay=0.0001)
 optimizer = dict(type='Adam', lr=0.00004, weight_decay=0.0001)
-
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
 lr_config = dict(
@@ -161,9 +161,11 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=200,
     warmup_ratio=1.0 / 3,
-    step=[50000],
+    #step=[500, 2000, 5000, 10000],
+    step=[5000],
+    gamma=0.5,
     by_epoch=False)
-checkpoint_config = CheckpointHook(interval=1000) #dict(interval=1)
+checkpoint_config = CheckpointHook(interval=500)
 # yapf:disable
 log_config = dict(
     interval=50,
@@ -176,10 +178,7 @@ log_config = dict(
 total_epochs = 4
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/faster_rcnn_r50_fpn_1x'
-load_from = './work_dirs/faster_rcnn_r50_fpn_1x/latest.pth'
-#load_from = './work_dirs/faster_rcnn_r50_fpn_1x/epoch_2.pth_loss_0300_0702am'
-
-#resume_from = './work_dirs/faster_rcnn_r50_fpn_1x/latest.pth'
+work_dir = './work_dirs/faster_rcnn_r101_fpn_1x'
+load_from = None #'./work_dirs/faster_rcnn_r101_fpn_1x/0-100/latest.pth'
 resume_from = None
 workflow = [('train', 1)]

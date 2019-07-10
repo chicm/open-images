@@ -5,4 +5,4 @@ CHECKPOINT=$2
 GPUS=$3
 
 PYTHONPATH=./ $PYTHON -m torch.distributed.launch --nproc_per_node=$GPUS \
-    ./mmdetection/tools/test.py $CONFIG $CHECKPOINT --launcher pytorch ${@:4}
+    ./detect/test_classes.py $CONFIG $CHECKPOINT --launcher pytorch ${@:4}
