@@ -121,7 +121,7 @@ def convert_model():
     import torch.nn as nn
     args = parse_args()
     cfg = Config.fromfile(args.config)
-    cfg.model.bbox_head.num_classes = 101
+    cfg.model.bbox_head.num_classes = 301
     model = build_detector(
         cfg.model, train_cfg=cfg.train_cfg, test_cfg=cfg.test_cfg)
     print(model)
@@ -129,29 +129,29 @@ def convert_model():
     print(model.bbox_head.fc_cls.bias.size())
 
     print(cfg.load_from)
-    model.load_state_dict(torch.load('./work_dirs/faster_rcnn_r101_fpn_1x/0-100/latest.pth')['state_dict'])
-    new_fc = nn.Linear(1024, 51)
-    new_fc_reg = nn.Linear(1024, 204)
+    model.load_state_dict(torch.load('./work_dirs/faster_rcnn_r101_fpn_1x/100-400/latest.pth')['state_dict'])
+    new_fc = nn.Linear(1024, 101)
+    new_fc_reg = nn.Linear(1024, 404)
 
     new_fc.weight.data[0] = model.bbox_head.fc_cls.weight.data[0]
     new_fc.bias.data[0] = model.bbox_head.fc_cls.bias.data[0]
     #new_fc.weight.data[1:51] = model.bbox_head.fc_cls.weight.data[51:]
     #new_fc.bias.data[1:51] = model.bbox_head.fc_cls.bias.data[51:]
-    new_fc.weight.data[1:51] = model.bbox_head.fc_cls.weight.data[1:51]
-    new_fc.bias.data[1:51] = model.bbox_head.fc_cls.bias.data[1:51]
+    new_fc.weight.data[1:101] = model.bbox_head.fc_cls.weight.data[201:301]
+    new_fc.bias.data[1:101] = model.bbox_head.fc_cls.bias.data[201:301]
 
     new_fc_reg.weight.data[0:4] = model.bbox_head.fc_reg.weight.data[0:4]
     new_fc_reg.bias.data[0:4] = model.bbox_head.fc_reg.bias.data[0:4]
     #new_fc_reg.weight.data[4:204] = model.bbox_head.fc_reg.weight.data[204:]
     #new_fc_reg.bias.data[4:204] = model.bbox_head.fc_reg.bias.data[204:]
-    new_fc_reg.weight.data[4:204] = model.bbox_head.fc_reg.weight.data[4:204]
-    new_fc_reg.bias.data[4:204] = model.bbox_head.fc_reg.bias.data[4:204]
+    new_fc_reg.weight.data[4:404] = model.bbox_head.fc_reg.weight.data[804:1204]
+    new_fc_reg.bias.data[4:404] = model.bbox_head.fc_reg.bias.data[804:1204]
 
     model.bbox_head.fc_cls = new_fc
     model.bbox_head.fc_reg = new_fc_reg
 
     #torch.save(model.state_dict(), './work_dirs/faster_rcnn_r101_fpn_1x/50-100/latest.pth')
-    torch.save(model.state_dict(), './work_dirs/faster_rcnn_r101_fpn_1x/0-50/latest.pth')
+    torch.save(model.state_dict(), './work_dirs/faster_rcnn_r101_fpn_1x/300-400/latest.pth')
 
 if __name__ == '__main__':
     main()

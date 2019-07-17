@@ -96,7 +96,9 @@ test_cfg = dict(
         nms_thr=0.7,
         min_bbox_size=0),
     rcnn=dict(
-        score_thr=0.001, nms=dict(type='nms', iou_thr=0.5), max_per_img=100)
+        #score_thr=0.001, nms=dict(type='nms', iou_thr=0.5), max_per_img=150)
+        #score_thr=0.001, nms=dict(type='nms', iou_thr=0.5), max_per_img=200)
+        score_thr=0.001, nms=dict(type='soft_nms', iou_thr=0.3, min_score=0.001), max_per_img=100)
     # soft-nms is also supported for rcnn testing
     # e.g., nms=dict(type='soft_nms', iou_thr=0.5, min_score=0.05)
 )
@@ -106,13 +108,14 @@ data_root = settings.ROOT_DIR
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 data = dict(
-    imgs_per_gpu=6,
-    workers_per_gpu=6,
+    imgs_per_gpu=5,
+    workers_per_gpu=5,
     train=dict(
         type=dataset_type,
         ann_file=data_root + '/detect/train_0-e',
         img_prefix=settings.TRAIN_IMG_DIR,
-        img_scale=(1024, 600),
+        img_scale=[(1024, 600), (900, 600), (800, 600)],
+        #img_scale=[(1024, 600),],
         img_norm_cfg=img_norm_cfg,
         size_divisor=32,
         flip_ratio=0.5,
@@ -121,9 +124,12 @@ data = dict(
         with_label=True,
         extra_aug=dict(
             photo_metric_distortion=dict(
-                brightness_delta=20,
-                contrast_range=(0.8,1.2),
-                saturation_range=(0.8,1.2)
+                brightness_delta=25,
+                contrast_range=(0.7,1.7),
+                saturation_range=(0.7,1.3)
+            ),
+            random_crop=dict(
+                min_crop_size=0.5
             )
         )
     ),
@@ -153,17 +159,19 @@ data = dict(
 # optimizer
 #optimizer = dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
 #optimizer = dict(type='Adam', lr=0.001, weight_decay=0.0001)
-optimizer = dict(type='Adam', lr=0.00004, weight_decay=0.0001)
+optimizer = dict(type='Adam', lr=0.0004, weight_decay=0.0001)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
 lr_config = dict(
+    #policy='cosine',
     policy='step',
     warmup='linear',
     warmup_iters=200,
     warmup_ratio=1.0 / 3,
-    #step=[500, 2000, 5000, 10000],
-    step=[5000],
+    step=[1000, 3000, 5000, 15000],
+    #step=[200000],
     gamma=0.5,
+    #target_lr=1e-5,
     by_epoch=False)
 checkpoint_config = CheckpointHook(interval=500)
 # yapf:disable
@@ -175,7 +183,7 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 4
+total_epochs = 20
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs/faster_rcnn_r101_fpn_1x'

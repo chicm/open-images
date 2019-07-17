@@ -103,7 +103,7 @@ test_cfg = dict(
         min_bbox_size=0),
     rcnn=dict(
         #score_thr=0.05, nms=dict(type='nms', iou_thr=0.5), max_per_img=50)
-        score_thr=0.001, nms=dict(type='nms', iou_thr=0.5), max_per_img=200)
+        score_thr=0.001, nms=dict(type='nms', iou_thr=0.5), max_per_img=100)
         #score_thr=0.05, nms=dict(type='soft_nms', iou_thr=0.3, min_score=0.05), max_per_img=100)
         #score_thr=0.01, nms=dict(type='soft_nms', iou_thr=0.3, min_score=0.01), max_per_img=100)
     # soft-nms is also supported for rcnn testing
@@ -133,6 +133,9 @@ data = dict(
                 brightness_delta=20,
                 contrast_range=(0.8,1.2),
                 saturation_range=(0.8,1.2)
+            ),
+            random_crop=dict(
+                min_crop_size=0.5
             )
         )
     ),
@@ -160,7 +163,7 @@ data = dict(
         test_mode=True))
 # optimizer
 #optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
-optimizer = dict(type='Adam', lr=0.00004, weight_decay=0.0001)
+optimizer = dict(type='Adam', lr=0.00006, weight_decay=0.0001)
 
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
@@ -169,7 +172,7 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=200,
     warmup_ratio=1.0 / 3,
-    step=[50000],
+    step=[4000],
     gamma=0.5,
     by_epoch=False)
 checkpoint_config = CheckpointHook(interval=1000) #dict(interval=1)

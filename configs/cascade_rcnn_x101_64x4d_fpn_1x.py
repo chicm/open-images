@@ -175,7 +175,8 @@ test_cfg = dict(
         nms_thr=0.7,
         min_bbox_size=0),
     rcnn=dict(
-        score_thr=0.05, nms=dict(type='nms', iou_thr=0.5), max_per_img=100),
+        #score_thr=0.05, nms=dict(type='nms', iou_thr=0.5), max_per_img=100),
+        score_thr=0.001, nms=dict(type='nms', iou_thr=0.5), max_per_img=150),
     keep_all_stages=False)
 # dataset settings
 dataset_type = 'CustomDataset'
@@ -184,13 +185,13 @@ data_root = settings.ROOT_DIR
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 data = dict(
-    imgs_per_gpu=2,
-    workers_per_gpu=2,
+    imgs_per_gpu=3,
+    workers_per_gpu=3,
     train=dict(
         type=dataset_type,
         ann_file=data_root + '/detect/train_0-e',
         img_prefix=settings.TRAIN_IMG_DIR,
-        img_scale=(1024, 600),
+        img_scale=(800, 512),
         
         img_norm_cfg=img_norm_cfg,
         size_divisor=32,
@@ -203,6 +204,9 @@ data = dict(
                 brightness_delta=20,
                 contrast_range=(0.8,1.2),
                 saturation_range=(0.8,1.2)
+            ),
+            random_crop=dict(
+                min_crop_size=0.7
             )
         )
     ),
@@ -210,7 +214,7 @@ data = dict(
         type=dataset_type,
         ann_file=data_root + '/detect/val.pkl',
         img_prefix=settings.VAL_IMG_DIR,
-        img_scale=(1024, 600),
+        img_scale=(800, 512),
         
         img_norm_cfg=img_norm_cfg,
         size_divisor=32,
@@ -222,7 +226,7 @@ data = dict(
         type=dataset_type,
         ann_file=data_root + '/detect/test.pkl',
         img_prefix=settings.TEST_IMG_DIR,
-        img_scale=(1024, 600),
+        img_scale=(800, 512),
         img_norm_cfg=img_norm_cfg,
         size_divisor=32,
         flip_ratio=0,
@@ -231,7 +235,7 @@ data = dict(
         test_mode=True))
 # optimizer
 #optimizer = dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
-optimizer = dict(type='Adam', lr=0.001, weight_decay=0.0001)
+optimizer = dict(type='Adam', lr=0.0002, weight_decay=0.0001)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
 lr_config = dict(
@@ -239,7 +243,8 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=200,
     warmup_ratio=1.0 / 3,
-    step=[500, 2000, 5000, 10000],
+    step=[1000, 3000, 10000],
+    #step=[60000],
     gamma=0.5,
     by_epoch=False)
 checkpoint_config = CheckpointHook(interval=500) #dict(interval=1)
