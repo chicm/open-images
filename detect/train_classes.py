@@ -10,6 +10,7 @@ from mmdet.apis import (train_detector, init_dist, get_root_logger,
                         set_random_seed)
 from mmdet.models import build_detector
 import torch
+import torch.nn as nn
 
 
 def parse_args():
@@ -37,6 +38,7 @@ def parse_args():
     parser.add_argument('--local_rank', type=int, default=0)
     parser.add_argument('--start_index', type=int, required=True)
     parser.add_argument('--end_index', type=int, required=True)
+    parser.add_argument('--balanced', action='store_true')
     args = parser.parse_args()
     if 'LOCAL_RANK' not in os.environ:
         os.environ['LOCAL_RANK'] = str(args.local_rank)
@@ -49,6 +51,11 @@ def main():
     print(args)
 
     cfg = Config.fromfile(args.config)
+
+    if args.balanced:
+        cfg.dataset_type = 'BalancedCustomDataset'
+        cfg.data.train.type = 'BalancedCustomDataset'
+
     # set cudnn_benchmark
     if cfg.get('cudnn_benchmark', False):
         torch.backends.cudnn.benchmark = True
@@ -118,7 +125,6 @@ def main():
         logger=logger)
 
 def convert_model():
-    import torch.nn as nn
     args = parse_args()
     cfg = Config.fromfile(args.config)
     cfg.model.bbox_head.num_classes = 301
@@ -153,6 +159,42 @@ def convert_model():
     #torch.save(model.state_dict(), './work_dirs/faster_rcnn_r101_fpn_1x/50-100/latest.pth')
     torch.save(model.state_dict(), './work_dirs/faster_rcnn_r101_fpn_1x/300-400/latest.pth')
 
+def convert_cas_model():
+    args = parse_args()
+    cfg = Config.fromfile(args.config)
+    cfg.model.bbox_head[0].num_classes = 401
+    cfg.model.bbox_head[1].num_classes = 401
+    cfg.model.bbox_head[2].num_classes = 401
+    model = build_detector(
+        cfg.model, train_cfg=cfg.train_cfg, test_cfg=cfg.test_cfg)
+    print(model)
+    print(model.bbox_head[0])
+
+    model.load_state_dict(torch.load('./work_dirs/cascade_rcnn_x101_64x4d_fpn_1x/100-500/latest.pth')['state_dict'])
+
+    for i in range(3):
+        new_fc = nn.Linear(1024, 501)
+        new_fc_reg = nn.Linear(1024, 2004)
+
+        new_fc.weight.data[0] = model.bbox_head[i].fc_cls.weight.data[0]
+        new_fc.bias.data[0] = model.bbox_head[i].fc_cls.bias.data[0]
+        new_fc.weight.data[101:501] = model.bbox_head[i].fc_cls.weight.data[1:]
+        new_fc.bias.data[101:501] = model.bbox_head[i].fc_cls.bias.data[1:]
+
+        #new_fc_reg.weight.data[0:4] = model.bbox_head[i].fc_reg.weight.data[0:4]
+        #new_fc_reg.bias.data[0:4] = model.bbox_head[i].fc_reg.bias.data[0:4]
+        #new_fc_reg.weight.data[404:] = model.bbox_head[i].fc_reg.weight.data[4:]
+        #new_fc_reg.bias.data[404:] = model.bbox_head[i].fc_reg.bias.data[4:]
+
+        model.bbox_head[i].fc_cls = new_fc
+        #model.bbox_head[i].fc_reg = new_fc_reg
+    
+    
+    #print(model.bbox_head.fc_cls.weight.size())
+    #print(model.bbox_head.fc_cls.bias.size())
+    torch.save(model.state_dict(), './work_dirs/cascade_rcnn_x101_64x4d_fpn_1x/0-500/latest.pth')
+
 if __name__ == '__main__':
     main()
     #convert_model()
+    #convert_cas_model()
