@@ -4,12 +4,12 @@ import pandas as pd
 import pickle
 import argparse
 from tqdm import tqdm
-from detect.utils import get_image_size, get_top_classes
+from detect.utils import get_image_size, get_classes
 import configs.settings as settings
 
 DATA_DIR = settings.DETECT_DATA_DIR
 
-def get_preds(raw_pred, threshold=None):
+def get_preds(raw_pred, threshold):
     res = {
         'labels': [],
         'scores': [],
@@ -18,7 +18,7 @@ def get_preds(raw_pred, threshold=None):
     for i, p in enumerate(raw_pred):
         if len(p) > 0:
             for e in p:
-                if (threshold is None) or (threshold is not None and e[4] > threshold):
+                if e[4] > threshold:
                     res['labels'].append(i)
                     res['scores'].append(e[4])
                     res['bboxes'].append(e[:4])
@@ -31,11 +31,11 @@ def get_pred_str(pred, w, h, classes):
     res = []
     for label, score, bbox in zip(pred['labels'], pred['scores'], pred['bboxes']):
         res.append(classes[label])
-        res.append('{:.7f}'.format(score))
-        res.append('{:.7f}'.format(bbox[0]/w))
-        res.append('{:.7f}'.format(bbox[1]/h))
-        res.append('{:.7f}'.format(bbox[2]/w))
-        res.append('{:.7f}'.format(bbox[3]/h))
+        res.append(score)
+        res.append(bbox[0]/w)
+        res.append(bbox[1]/h)
+        res.append(bbox[2]/w)
+        res.append(bbox[3]/h)
     res = [str(x) for x in res]
     return ' '.join(res)
 
@@ -59,7 +59,7 @@ def create_submit(args):
         total_objs += len(p['labels'])
     print('total predicted objects:', total_objs)
 
-    classes, _ = get_top_classes(args.start_index, args.end_index)
+    classes, _ = get_classes()
     pred_strs = []
     for i, p in tqdm(enumerate(final_preds), total=len(final_preds)):
         h = df_test.iloc[i].h
@@ -75,10 +75,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='create submission from pred file')
     parser.add_argument('--pred_file', type=str, required=True)
     parser.add_argument('--out', type=str, required=True)
-    parser.add_argument('--th', type=float, default=None)
-    parser.add_argument('--start_index', type=int, default=0)
-    parser.add_argument('--end_index', type=int, default=500)
-    
+    parser.add_argument('--th', type=float, required=True)
     args = parser.parse_args()
 
     create_submit(args)

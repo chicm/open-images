@@ -243,8 +243,8 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=200,
     warmup_ratio=1.0 / 3,
-    step=[10000, 20000],
-    #step=[60000],
+    step=[2000, 4000],
+    #step=[3000, 6000],
     gamma=0.5,
     by_epoch=False)
 checkpoint_config = CheckpointHook(interval=500) #dict(interval=1)
